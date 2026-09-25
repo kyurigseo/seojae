@@ -1,0 +1,12 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+numpy>=1.26
+pytest>=8.0
+httpx>=0.27
+
+# scikit-learn is intentionally NOT used — see app/scoring/isolation_model.py
+# docstring. Its compiled Cython extensions failed to load on this machine's
+# Python 3.14 (DLL/ABI mismatch), so the MVP ships a small from-scratch
+# Isolation Forest (numpy only). If your environment loads sklearn fine,
+# `pip install scikit-learn` and swap it back in per that file's note.
