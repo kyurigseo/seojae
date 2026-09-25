@@ -24,6 +24,12 @@ def list_patients():
     return list(PATIENTS.values())
 
 
+@router.get("/medicines")
+def list_medicines():
+    """환자용 복약 리터러시 콘텐츠 (효능/부작용/오남용 징후/대체요법)."""
+    return list(MEDICINES.values())
+
+
 @router.get("/prescriptions")
 def list_prescriptions():
     return [

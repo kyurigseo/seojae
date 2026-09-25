@@ -39,6 +39,15 @@ MEDICINES: dict[str, Medicine] = {
             drug_class=DrugClass.OPIOID,
             standard_interval_days=7,
             contraindicated_with=["zolpidem", "midazolam", "diazepam"],
+            patient_summary="수술 후 통증, 암성 통증 등 심한 통증을 완화하기 위해 피부에 붙이는 마약성 진통제입니다.",
+            common_side_effects="졸음, 어지러움, 변비, 구역감이 흔하며, 고용량에서는 호흡이 느려질 수 있습니다.",
+            misuse_warning_signs=[
+                "처방받은 것보다 자주 패치를 교체하는 경우",
+                "통증이 없는데도 계속 사용하는 경우",
+                "여러 병원에서 동시에 처방받는 경우",
+                "음주나 수면제와 함께 사용하는 경우",
+            ],
+            non_drug_alternatives="물리치료, 온열 요법, 신경차단술, 비오피오이드 진통제 병행.",
         ),
         Medicine(
             id="oxycodone",
@@ -47,6 +56,14 @@ MEDICINES: dict[str, Medicine] = {
             drug_class=DrugClass.OPIOID,
             standard_interval_days=28,
             contraindicated_with=["zolpidem", "midazolam", "diazepam"],
+            patient_summary="중등도 이상의 통증을 완화하는 마약성 진통제입니다.",
+            common_side_effects="졸음, 변비, 구역, 구강 건조가 흔하며 고용량에서 호흡저하 위험이 있습니다.",
+            misuse_warning_signs=[
+                "처방된 양보다 많이 복용하는 경우",
+                "조기 재처방을 반복적으로 요청하는 경우",
+                "기분 전환 목적으로 복용하는 경우",
+            ],
+            non_drug_alternatives="물리치료, 비오피오이드 진통제, 침술, 마음챙김 기반 통증 관리.",
         ),
         Medicine(
             id="hydromorphone",
@@ -55,6 +72,13 @@ MEDICINES: dict[str, Medicine] = {
             drug_class=DrugClass.OPIOID,
             standard_interval_days=28,
             contraindicated_with=["zolpidem", "midazolam", "diazepam"],
+            patient_summary="옥시코돈보다 강한 효과의 마약성 진통제로, 심한 통증에 사용됩니다.",
+            common_side_effects="졸음, 구역, 변비, 고용량에서 호흡저하 위험.",
+            misuse_warning_signs=[
+                "다른 오피오이드에서 최근 전환된 경우",
+                "여러 병원을 거치며 약을 바꿔가며 처방받는 경우",
+            ],
+            non_drug_alternatives="완화의료팀 상담, 물리치료, 통증클리닉 연계.",
         ),
         Medicine(
             id="zolpidem",
@@ -63,6 +87,14 @@ MEDICINES: dict[str, Medicine] = {
             drug_class=DrugClass.SEDATIVE_HYPNOTIC,
             standard_interval_days=28,
             contraindicated_with=["fentanyl_patch", "oxycodone", "hydromorphone"],
+            patient_summary="불면증 치료에 사용되는 단기 수면유도제입니다.",
+            common_side_effects="졸음, 어지러움, 기억장애, 드물게 수면 중 이상행동(몽유 등).",
+            misuse_warning_signs=[
+                "처방받은 기간보다 일찍 재처방을 요청하는 경우",
+                "여러 병원에서 동시에 처방받는 경우",
+                "낮에도 복용하는 경우",
+            ],
+            non_drug_alternatives="수면 위생 교육, 불면증 인지행동치료, 카페인·야간 스크린 사용 줄이기.",
         ),
         Medicine(
             id="midazolam",
@@ -71,6 +103,13 @@ MEDICINES: dict[str, Medicine] = {
             drug_class=DrugClass.SEDATIVE_HYPNOTIC,
             standard_interval_days=28,
             contraindicated_with=["fentanyl_patch", "oxycodone", "hydromorphone"],
+            patient_summary="불안 완화 및 수면 유도에 사용되는 진정제입니다.",
+            common_side_effects="졸음, 근육 이완, 기억장애, 고용량·병용 시 호흡저하 위험.",
+            misuse_warning_signs=[
+                "오피오이드와 함께 복용하는 경우(호흡저하 위험)",
+                "처방 없이 반복 사용하는 경우",
+            ],
+            non_drug_alternatives="이완요법, 인지행동치료, 수면습관 개선.",
         ),
         Medicine(
             id="methylphenidate",
@@ -78,6 +117,14 @@ MEDICINES: dict[str, Medicine] = {
             ingredient="methylphenidate",
             drug_class=DrugClass.STIMULANT,
             standard_interval_days=30,
+            patient_summary="ADHD(주의력결핍과잉행동장애) 치료에 사용되는 중추신경자극제입니다.",
+            common_side_effects="식욕 감소, 불면, 두통, 심박수 증가.",
+            misuse_warning_signs=[
+                "집중력을 높이려고 처방량보다 많이 복용하는 경우",
+                "시험 기간 등에 임시로 복용하는 경우",
+                "타인에게 약을 나눠주는 경우",
+            ],
+            non_drug_alternatives="행동치료, 구조화된 일과 관리, 규칙적 운동, 수면 개선.",
         ),
         Medicine(
             id="propofol",
@@ -85,6 +132,13 @@ MEDICINES: dict[str, Medicine] = {
             ingredient="propofol",
             drug_class=DrugClass.ANESTHETIC,
             standard_interval_days=30,
+            patient_summary="수면 마취나 진정 시술에 사용되는 정맥마취제입니다. 일반적으로 가정에서 복용하는 약이 아닙니다.",
+            common_side_effects="주사 부위 통증, 혈압 저하, 호흡저하(의료진 감독 하에만 투여).",
+            misuse_warning_signs=[
+                "의료기관 외에서 사용된 기록이 있는 경우",
+                "짧은 간격으로 반복 시술을 받는 경우",
+            ],
+            non_drug_alternatives="해당 없음 — 시술용 약물이므로 대체 방법은 담당 의료진과 상담하세요.",
         ),
     ]
 }

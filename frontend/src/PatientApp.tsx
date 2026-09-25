@@ -1,5 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MedisyncChar, CharBubble } from "./MedisyncChar";
+import {
+  DEMO_PATIENT_ID,
+  fetchMedicineLibrary,
+  fetchPatientDashboard,
+  fetchPatientProfile,
+  type LibraryMedicine,
+  type PatientAlert,
+  type PatientDashboard,
+  type PatientProfile,
+} from "./api/patientAdapter";
+import { postConsent } from "./api/client";
 
 type Screen = "onboarding" | "home" | "history" | "library" | "alerts" | "family" | "settings";
 type OnboardingStep = "verify" | "consent" | "guardian";
@@ -325,7 +336,19 @@ const VISITS = [
 ];
 
 /* ─── Home Screen ────────────────────────────────────────────────────────── */
-function HomeScreen({ onNav }: { onNav: (s: Screen) => void }) {
+function HomeScreen({
+  onNav,
+  profile,
+  dashboard,
+}: {
+  onNav: (s: Screen) => void;
+  profile: PatientProfile | null;
+  dashboard: PatientDashboard | null;
+}) {
+  const meds = dashboard?.currentMeds ?? MEDS;
+  const visits = dashboard?.recentVisits ?? VISITS;
+  const needsAttention = dashboard ? dashboard.hasUnreadAlert : true;
+  const displayName = profile?.name ?? "지영";
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: M.bg, fontFamily: "Nunito, sans-serif" }}>
       <StatusBar />
@@ -353,7 +376,7 @@ function HomeScreen({ onNav }: { onNav: (s: Screen) => void }) {
         {/* Greeting */}
         <div style={{ marginBottom: 14 }}>
           <p style={{ fontSize: 12, fontWeight: 600, color: M.muted, margin: "0 0 1px" }}>2024년 11월 22일 금요일</p>
-          <p style={{ fontSize: 26, fontWeight: 900, color: M.text, margin: 0, letterSpacing: "-0.02em" }}>지영님, 안녕하세요</p>
+          <p style={{ fontSize: 26, fontWeight: 900, color: M.text, margin: 0, letterSpacing: "-0.02em" }}>{displayName}님, 안녕하세요</p>
         </div>
 
         {/* Hero status card */}
@@ -372,11 +395,11 @@ function HomeScreen({ onNav }: { onNav: (s: Screen) => void }) {
                 padding: "4px 10px", borderRadius: 20,
                 background: "rgba(255,255,255,0.18)", marginBottom: 10
               }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#FDE68A" }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: "#FEF3C7" }}>확인 필요</span>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: needsAttention ? "#FDE68A" : "#BBF7D0" }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: "#FEF3C7" }}>{needsAttention ? "확인 필요" : "안정적"}</span>
               </div>
               <p style={{ fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.35, margin: "0 0 12px" }}>
-                잠깐 확인해 볼<br/>사항이 있습니다
+                {needsAttention ? <>잠깐 확인해 볼<br/>사항이 있습니다</> : <>이번 달 복약이<br/>안정적으로 관리되고 있어요</>}
               </p>
               <button onClick={() => onNav("alerts")} style={{
                 padding: "9px 18px", borderRadius: 12,
@@ -389,7 +412,7 @@ function HomeScreen({ onNav }: { onNav: (s: Screen) => void }) {
             </div>
             {/* Character — attention state: calm concern for "something to check" */}
             <div style={{ flexShrink: 0, marginBottom: -2 }}>
-              <MedisyncChar size={88} state="attention" />
+              <MedisyncChar size={88} state={needsAttention ? "attention" : "complete"} />
             </div>
           </div>
         </div>
@@ -440,7 +463,7 @@ function HomeScreen({ onNav }: { onNav: (s: Screen) => void }) {
             <button onClick={() => onNav("history")} style={{ fontSize: 12, fontWeight: 600, color: M.teal, background: "none", border: "none", cursor: "pointer" }}>전체 보기</button>
           </div>
           <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4 }} className="hide-scrollbar">
-            {MEDS.map(m => (
+            {meds.map(m => (
               <div key={m.name} style={{
                 background: M.card, borderRadius: 18, padding: "14px",
                 flexShrink: 0, width: 148, border: `1px solid ${M.border}`, boxShadow: shadowSm
@@ -467,7 +490,7 @@ function HomeScreen({ onNav }: { onNav: (s: Screen) => void }) {
           <p style={{ fontSize: 14, fontWeight: 800, color: M.text, marginBottom: 10 }}>최근 약국 방문</p>
           <Card>
             <div style={{ padding: "16px" }}>
-              {VISITS.slice(0, 3).map((v, i) => (
+              {visits.slice(0, 3).map((v, i) => (
                 <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 16 }}>
                     <div style={{
@@ -527,11 +550,21 @@ const HISTORY = [
   { date: "2024-08-14", institution: "서울아산병원", medicine: "졸로프트", dosage: "50mg × 30정", days: 30, color: "#D97706" },
 ];
 
-function HistoryScreen({ onNav }: { onNav: (s: Screen) => void }) {
+function HistoryScreen({
+  onNav,
+  history,
+}: {
+  onNav: (s: Screen) => void;
+  history: PatientDashboard["history"] | null;
+}) {
   const [filter, setFilter] = useState("전체");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const FILTERS = ["전체", "옥시콘틴", "리탈린", "졸로프트", "세브란스병원"];
-  const filtered = filter === "전체" ? HISTORY : HISTORY.filter(h => h.medicine === filter || h.institution === filter);
+  const source = history ?? HISTORY;
+  const FILTERS = [
+    "전체",
+    ...new Set([...source.map(h => h.medicine), ...source.map(h => h.institution)]),
+  ];
+  const filtered = filter === "전체" ? source : source.filter(h => h.medicine === filter || h.institution === filter);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: M.bg, fontFamily: "Nunito, sans-serif" }}>
@@ -635,10 +668,11 @@ const MEDICINES = [
     alternatives: "불안에 대한 인지행동치료, 호흡 기법, 점진적 근육 이완법." },
 ];
 
-function LibraryScreen() {
+function LibraryScreen({ medicines }: { medicines: LibraryMedicine[] | null }) {
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<typeof MEDICINES[0] | null>(null);
-  const filtered = MEDICINES.filter(m => m.name.includes(search) || m.category.includes(search));
+  const source = medicines && medicines.length > 0 ? medicines : MEDICINES;
+  const [selected, setSelected] = useState<typeof source[0] | null>(null);
+  const filtered = source.filter(m => m.name.includes(search) || m.category.includes(search));
 
   if (selected) return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: M.bg, fontFamily: "Nunito, sans-serif" }}>
@@ -735,7 +769,8 @@ const ALERTS = [
   { date: "2024년 10월 3일", title: "리필 시기에 대해 가볍게 확인드립니다", body: "직전 조제보다 약 10일 일찍 리필이 이루어졌습니다. 여행, 일정 변경 등 다양한 이유로 이런 경우가 생길 수 있습니다. 궁금한 점이 있으시면 약사에게 편하게 물어보세요.", read: true, level: "안내" },
 ];
 
-function AlertsScreen() {
+function AlertsScreen({ alerts }: { alerts: PatientAlert[] | null }) {
+  const source = alerts && alerts.length > 0 ? alerts : ALERTS;
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, background: M.bg, fontFamily: "Nunito, sans-serif" }}>
       <StatusBar />
@@ -744,7 +779,13 @@ function AlertsScreen() {
         <p style={{ fontSize: 12, color: M.muted, margin: 0 }}>가벼운 안내 메시지입니다 — 문제가 있다는 의미가 아닙니다.</p>
       </div>
       <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: 14 }} className="hide-scrollbar">
-        {ALERTS.map((a, i) => {
+        {source.length === 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", textAlign: "center", padding: "40px 20px" }}>
+            <MedisyncChar size={80} state="complete" />
+            <p style={{ fontSize: 16, fontWeight: 700, color: M.text, marginTop: 16, marginBottom: 6 }}>새로운 알림이 없어요</p>
+            <p style={{ fontSize: 13, color: M.muted, lineHeight: 1.55 }}>복약이 안정적으로 관리되고 있습니다.</p>
+          </div>
+        ) : source.map((a, i) => {
           const isNew = !a.read;
           return (
             <Card key={i} style={{ overflow: "hidden", border: `1px solid ${isNew ? "#FDE68A" : M.border}` }}>
@@ -894,11 +935,23 @@ function FamilyScreen() {
 }
 
 /* ─── Settings Screen ────────────────────────────────────────────────────── */
-function SettingsScreen({ onLogout }: { onLogout: () => void }) {
-  const [sharePharmacy, setSharePharmacy] = useState(false);
+function SettingsScreen({
+  onLogout,
+  profile,
+  onToggleConsent,
+}: {
+  onLogout: () => void;
+  profile: PatientProfile | null;
+  onToggleConsent: (next: boolean) => void;
+}) {
+  const [sharePharmacy, setSharePharmacy] = useState(profile?.consentGiven ?? false);
   const [personalOnly, setPersonalOnly] = useState(true);
   const [pushAlerts, setPushAlerts] = useState(true);
   const [smsAlerts, setSmsAlerts] = useState(false);
+
+  useEffect(() => {
+    if (profile) setSharePharmacy(profile.consentGiven);
+  }, [profile]);
 
   function Toggle({ on, toggle }: { on: boolean; toggle: () => void }) {
     return (
@@ -924,9 +977,9 @@ function SettingsScreen({ onLogout }: { onLogout: () => void }) {
       <div style={{ flex: 1, overflowY: "auto", padding: "0 20px 20px", display: "flex", flexDirection: "column", gap: 16 }} className="hide-scrollbar">
         {/* Profile card */}
         <Card style={{ padding: "16px", border: `1px solid ${M.border}`, display: "flex", alignItems: "center", gap: 14 }}>
-          <div style={{ width: 52, height: 52, borderRadius: "50%", background: `linear-gradient(135deg, ${M.teal}, ${M.teal2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, fontWeight: 800 }}>지</div>
+          <div style={{ width: 52, height: 52, borderRadius: "50%", background: `linear-gradient(135deg, ${M.teal}, ${M.teal2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, fontWeight: 800 }}>{(profile?.name ?? "지영")[0]}</div>
           <div>
-            <p style={{ fontSize: 16, fontWeight: 800, color: M.text, margin: "0 0 2px" }}>김지영</p>
+            <p style={{ fontSize: 16, fontWeight: 800, color: M.text, margin: "0 0 2px" }}>{profile?.name ?? "김지영"}</p>
             <p style={{ fontSize: 12, color: M.muted, margin: 0 }}>010-****-5678 · 인증 완료</p>
           </div>
           <div style={{ marginLeft: "auto" }}>
@@ -936,7 +989,11 @@ function SettingsScreen({ onLogout }: { onLogout: () => void }) {
 
         {[
           { title: "동의 및 정보 공유", items: [
-            { label: "약국과 공유", desc: "조제 시 약사가 안전 요약을 확인합니다", on: sharePharmacy, toggle: () => setSharePharmacy(!sharePharmacy) },
+            { label: "약국과 공유", desc: "조제 시 약사가 안전 요약을 확인합니다", on: sharePharmacy, toggle: () => {
+              const next = !sharePharmacy;
+              setSharePharmacy(next);
+              onToggleConsent(next);
+            } },
             { label: "개인 기록 전용", desc: "데이터가 메디싱크 내에서만 사용됩니다", on: personalOnly, toggle: () => setPersonalOnly(!personalOnly) },
           ]},
           { title: "알림 설정", items: [
@@ -1024,7 +1081,28 @@ function BottomNav({ screen, onNav }: { screen: Screen; onNav: (s: Screen) => vo
 /* ─── Root ───────────────────────────────────────────────────────────────── */
 export default function PatientApp() {
   const [screen, setScreen] = useState<Screen>("onboarding");
+  const [profile, setProfile] = useState<PatientProfile | null>(null);
+  const [dashboard, setDashboard] = useState<PatientDashboard | null>(null);
+  const [library, setLibrary] = useState<LibraryMedicine[] | null>(null);
   const nav = (s: Screen) => setScreen(s);
+
+  useEffect(() => {
+    Promise.all([fetchPatientProfile(), fetchPatientDashboard(), fetchMedicineLibrary()])
+      .then(([p, d, lib]) => {
+        setProfile(p);
+        setDashboard(d);
+        setLibrary(lib);
+      })
+      .catch((err) => {
+        console.error("PatientApp: falling back to demo data — backend unreachable:", err);
+      });
+  }, []);
+
+  const handleToggleConsent = (next: boolean) => {
+    postConsent(DEMO_PATIENT_ID, next).catch((err) =>
+      console.error("Failed to save consent", err)
+    );
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
@@ -1032,12 +1110,18 @@ export default function PatientApp() {
       {screen !== "onboarding" && (
         <>
           <div style={{ flex: 1, overflow: "hidden" }}>
-            {screen === "home"     && <HomeScreen    onNav={nav} />}
-            {screen === "history"  && <HistoryScreen onNav={nav} />}
-            {screen === "library"  && <LibraryScreen />}
-            {screen === "alerts"   && <AlertsScreen />}
+            {screen === "home"     && <HomeScreen    onNav={nav} profile={profile} dashboard={dashboard} />}
+            {screen === "history"  && <HistoryScreen onNav={nav} history={dashboard?.history ?? null} />}
+            {screen === "library"  && <LibraryScreen medicines={library} />}
+            {screen === "alerts"   && <AlertsScreen alerts={dashboard?.alerts ?? null} />}
             {screen === "family"   && <FamilyScreen />}
-            {screen === "settings" && <SettingsScreen onLogout={() => setScreen("onboarding")} />}
+            {screen === "settings" && (
+              <SettingsScreen
+                onLogout={() => setScreen("onboarding")}
+                profile={profile}
+                onToggleConsent={handleToggleConsent}
+              />
+            )}
           </div>
           <BottomNav screen={screen} onNav={nav} />
         </>

@@ -110,3 +110,9 @@ export const postAlertAction = (prescriptionId: string, action: PharmacistAction
     `/api/alerts/${prescriptionId}/action`,
     { method: "POST", body: JSON.stringify({ action, note: note || null }) }
   );
+
+export const postConsent = (patientId: string, consent: boolean) =>
+  api<{ patient_id: string; consent_given: boolean }>(
+    `/api/patients/${patientId}/consent?consent=${consent}`,
+    { method: "POST" }
+  );

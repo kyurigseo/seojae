@@ -47,6 +47,12 @@ class Medicine(BaseModel):
     )
     contraindicated_with: list[str] = Field(default_factory=list)
 
+    # 환자용 복약 리터러시 앱 콘텐츠 (보고서 5번 기능 D)
+    patient_summary: str = ""
+    common_side_effects: str = ""
+    misuse_warning_signs: list[str] = Field(default_factory=list)
+    non_drug_alternatives: str = ""
+
 
 class Institution(BaseModel):
     id: str
