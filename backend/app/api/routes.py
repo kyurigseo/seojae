@@ -5,9 +5,18 @@ from pydantic import BaseModel
 
 from app import demo_data, store
 from app.demo_data import INSTITUTIONS, MEDICINES, PATIENTS, PRESCRIPTIONS
-from app.scoring.engine import score_prescription
+from app.integrations.mfds_client import MfdsClientError, search_drug_info
+from app.scoring.engine import GRADE_LABELS, score_prescription
 
 router = APIRouter(prefix="/api")
+
+ALLOWED_ACTIONS = {"proceeded", "held", "justified", "reported"}
+ACTION_LABELS = {
+    "proceeded": "확인완료",
+    "held": "보류",
+    "justified": "사유기재",
+    "reported": "신고",
+}
 
 
 @router.get("/patients")
@@ -25,6 +34,15 @@ def list_prescriptions():
             "institution": INSTITUTIONS[rx.institution_id].name,
             "issued_at": rx.issued_at,
             "medicines": [MEDICINES[i.medicine_id].name for i in rx.items],
+            "items": [
+                {
+                    "medicine": MEDICINES[i.medicine_id].name,
+                    "dose_mg": i.dose_mg,
+                    "days_supply": i.days_supply,
+                    "quantity": i.quantity,
+                }
+                for i in rx.items
+            ],
         }
         for rx in sorted(PRESCRIPTIONS.values(), key=lambda r: r.issued_at)
     ]
@@ -88,7 +106,7 @@ def dashboard_summary():
 
 
 class AlertActionRequest(BaseModel):
-    action: str  # "ack" | "justify" | "report"
+    action: str  # "proceeded" | "held" | "justified" | "reported"
     note: str | None = None
 
 
@@ -96,11 +114,51 @@ class AlertActionRequest(BaseModel):
 def alert_action(prescription_id: str, body: AlertActionRequest):
     if prescription_id not in PRESCRIPTIONS:
         raise HTTPException(status_code=404, detail="prescription not found")
-    if body.action not in {"ack", "justify", "report"}:
-        raise HTTPException(status_code=400, detail="action must be ack, justify, or report")
+    if body.action not in ALLOWED_ACTIONS:
+        raise HTTPException(
+            status_code=400, detail=f"action must be one of {sorted(ALLOWED_ACTIONS)}"
+        )
 
-    store.record_action(prescription_id, body.action)
+    store.record_action(prescription_id, body.action, body.note)
     return {"prescription_id": prescription_id, "action": body.action, "note": body.note}
+
+
+@router.get("/audit-log")
+def audit_log():
+    entries = []
+    for prescription_id, detail in store.all_actions().items():
+        result = store.get_score(prescription_id)
+        if result is None:
+            continue
+        rx = PRESCRIPTIONS.get(prescription_id)
+        patient = PATIENTS.get(result.patient_id)
+        entries.append(
+            {
+                "prescription_id": prescription_id,
+                "date": detail["at"],
+                "patient_name": patient.name if patient else result.patient_id,
+                "age": (rx.issued_at.year - patient.birth_year) if patient and rx else None,
+                "score": result.score,
+                "grade": result.grade,
+                "grade_label": GRADE_LABELS[result.grade],
+                "action": detail["action"],
+                "action_label": ACTION_LABELS.get(detail["action"], detail["action"]),
+                "note": detail["note"],
+            }
+        )
+    entries.sort(key=lambda e: e["date"], reverse=True)
+    return entries
+
+
+@router.get("/mfds/drug-info")
+async def mfds_drug_info(item_name: str):
+    """Live lookup against 식약처 의약품개요정보(e약은요). Needs MFDS_API_KEY in
+    backend/.env — see backend/.env.example. Try item_name=타이레놀정500mg in
+    /docs to test your key without it ever leaving your machine."""
+    try:
+        return await search_drug_info(item_name)
+    except MfdsClientError as e:
+        raise HTTPException(status_code=503, detail=str(e))
 
 
 @router.post("/patients/{patient_id}/consent")

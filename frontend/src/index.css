@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+/* ─── Medisync Design Tokens ─────────────────────────────────────────────── */
+:root {
+  /* Brand cyan family */
+  --ms-50:   #F0FAFB;
+  --ms-100:  #DFF4F5;   /* primary brand */
+  --ms-200:  #BFE8ED;   /* secondary brand */
+  --ms-300:  #8DD6DE;
+  --ms-400:  #5EC0CB;
+  --ms-500:  #35A8B5;   /* action / interactive */
+  --ms-600:  #2A8A96;
+  --ms-700:  #1E6B75;
+  --ms-800:  #134652;   /* web sidebar */
+  --ms-900:  #0D2E38;   /* deepest */
+
+  /* Web dashboard */
+  --web-sidebar:  #0F3540;
+  --web-sidebar2: #163D4A;
+  --web-bg:       #F5FAFB;
+  --web-card:     #FFFFFF;
+  --web-border:   #D8EFF2;
+  --web-text:     #0D2E38;
+  --web-muted:    #5A8A95;
+  --web-active:   #DFF4F5;
+
+  /* Mobile app */
+  --mob-bg:     #DFF4F5;
+  --mob-card:   #FFFFFF;
+  --mob-text:   #0D2E38;
+  --mob-muted:  #5A8A95;
+  --mob-border: #BFE8ED;
+
+  /* Risk tiers */
+  --risk-safe:    #16A34A;
+  --risk-safe-bg: #F0FDF4;
+  --risk-warn:    #D97706;
+  --risk-warn-bg: #FFFBEB;
+  --risk-high:    #DC2626;
+  --risk-high-bg: #FEF2F2;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+
+.font-patient  { font-family: 'Nunito', sans-serif; }
+.font-pharma   { font-family: 'Inter', sans-serif; }
+.font-mono-data{ font-family: 'JetBrains Mono', monospace; }
+
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Web sidebar nav hover */
+.sidebar-item { transition: background 0.15s; }
+.sidebar-item:hover { background: rgba(223,244,245,0.08); }
+.sidebar-item.active { background: rgba(223,244,245,0.14); }
+
+/* Web table rows */
+.queue-row { transition: background 0.1s; }
+.queue-row:hover { background: #F0FAFB; }
+
+/* Smooth transitions */
+button { transition: opacity 0.15s, background 0.15s; }

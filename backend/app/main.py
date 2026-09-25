@@ -27,8 +27,10 @@ def health():
     return {"status": "ok"}
 
 
-# Light demo frontend (plain HTML/CSS/JS, no build step) served alongside
-# the API so `uvicorn app.main:app` is the only command needed for a demo.
-FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
-if FRONTEND_DIR.exists():
-    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+# Production build of the React frontend (`cd frontend && npm run build`),
+# served alongside the API so `uvicorn app.main:app` is the only command
+# needed for a demo. During development, run the Vite dev server separately
+# (`npm run dev`) instead — it talks to this API over CORS (allow_origins=*).
+FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if FRONTEND_DIST.exists():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")

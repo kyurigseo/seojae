@@ -4,6 +4,7 @@ pydantic>=2.7
 numpy>=1.26
 pytest>=8.0
 httpx>=0.27
+python-dotenv>=1.0
 
 # scikit-learn is intentionally NOT used — see app/scoring/isolation_model.py
 # docstring. Its compiled Cython extensions failed to load on this machine's

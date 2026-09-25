@@ -1,28 +1,16 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Medisync 약사 대시보드 (MVP 데모)</title>
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header class="topbar">
-    <div class="brand">💊 Medisync <span class="tag">약사 조제 대시보드 · MVP 데모</span></div>
-    <div id="summary" class="summary"></div>
-  </header>
-
-  <main class="layout">
-    <aside class="rx-list">
-      <h2>조제 접수 목록</h2>
-      <ul id="rxList"></ul>
-    </aside>
-
-    <section class="detail" id="detail">
-      <p class="placeholder">왼쪽에서 처방을 선택하면 리스크 스코어를 계산할 수 있어요.</p>
-    </section>
-  </main>
-
-  <script src="app.js"></script>
-</body>
+<!doctype html>
+<html lang="<!-- figma:lang -->">
+  <head>
+    <!-- figma:head-start -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><!-- figma:title --></title>
+    <!-- figma:head-end -->
+  </head>
+  <body>
+    <!-- figma:body-start -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- figma:body-end -->
+  </body>
 </html>

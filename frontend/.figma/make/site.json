@@ -1,0 +1,10 @@
+{
+  "description": "A personal medication-safety companion app that helps patients manage controlled medications, ensuring safe usage and providing educational resources.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

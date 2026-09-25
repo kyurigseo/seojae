@@ -69,7 +69,8 @@ app/
 | POST | `/api/prescriptions/{id}/score` | 리스크 점수 계산 |
 | GET | `/api/patients/{id}/timeline` | 처방 이력 타임라인 + 점수 |
 | GET | `/api/dashboard/summary` | 약국 대시보드 요약 (등급별 카운트, 미처리 고위험 알림) |
-| POST | `/api/alerts/{id}/action` | 약사 액션 기록 (`ack`/`justify`/`report`) |
+| POST | `/api/alerts/{id}/action` | 약사 액션 기록 (`proceeded`/`held`/`justified`/`reported`) |
+| GET | `/api/audit-log` | 처리된 알림 감사 로그 (날짜/환자/점수/처리결과/메모) |
 | POST | `/api/patients/{id}/consent` | 환자 동의 저장 |
 
 ## MVP 범위 밖 (의도적으로 생략)
