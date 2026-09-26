@@ -46,11 +46,16 @@ async def receive_prescription_gateway(
     anonymized_hash = anonymize_resident_id(payload.resident_reg_no, payload.patient_id)
 
     # 2. Construct Patient and Prescription domain models for scoring engine
+    try:
+        birth_year = int(payload.birth_date[:4]) if payload.birth_date else 1990
+    except Exception:
+        birth_year = 1990
+
     patient_obj = Patient(
         id=payload.patient_id,
         name=payload.patient_name,
-        birth_date=payload.birth_date,
-        gender=payload.gender,
+        birth_year=birth_year,
+        consent_given=True,
     )
     demo_data.PATIENTS[payload.patient_id] = patient_obj
 
@@ -68,18 +73,21 @@ async def receive_prescription_gateway(
         id=payload.prescription_id,
         patient_id=payload.patient_id,
         institution_id=payload.institution_id,
+        doctor_id="doc_gateway",
         issued_at=payload.issued_at,
         items=rx_items,
     )
     demo_data.PRESCRIPTIONS[payload.prescription_id] = rx_obj
 
-    # If institution not in DEMO INSTITUTIONS, add default mock institution
+# If institution not in DEMO INSTITUTIONS, add default mock institution
     if payload.institution_id not in INSTITUTIONS:
+        from app.schemas import InstitutionType
         from app.demo_data import Institution
         INSTITUTIONS[payload.institution_id] = Institution(
             id=payload.institution_id,
             name="연동병원 (Gateway)",
-            region="서울",
+            type=InstitutionType.HOSPITAL,
+            is_specialty_pain_clinic=False,
         )
 
     # 3. Invoke scoring engine
@@ -98,19 +106,19 @@ async def receive_prescription_gateway(
             "prescription_id": payload.prescription_id,
             "institution_id": payload.institution_id,
             "anonymized_patient_hash": anonymized_hash,
-            "risk_score": score_result.total_score,
+            "risk_score": score_result.score,
             "risk_grade": score_result.grade,
         },
     )
 
     # 5. Broadcast real-time SSE notification if high-risk (score >= 80)
-    if score_result.total_score >= 80 or score_result.grade == "high_risk":
+    if score_result.score >= 80 or score_result.grade == "high_risk":
         alert_payload = {
             "prescription_id": payload.prescription_id,
             "patient_name": payload.patient_name,
             "anonymized_patient_hash": anonymized_hash,
             "institution_id": payload.institution_id,
-            "total_score": score_result.total_score,
+            "total_score": score_result.score,
             "grade": score_result.grade,
             "explanation": score_result.explanation,
             "issued_at": payload.issued_at,
@@ -121,8 +129,8 @@ async def receive_prescription_gateway(
         status="success",
         prescription_id=payload.prescription_id,
         anonymized_patient_hash=anonymized_hash,
-        risk_score=score_result.total_score,
+        risk_score=score_result.score,
         risk_grade=score_result.grade,
-        explanation=score_result.explanation,
+        explanation=[score_result.explanation],
         audit_index=audit_entry.index,
     )

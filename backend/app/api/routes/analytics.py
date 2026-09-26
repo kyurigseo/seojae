@@ -50,25 +50,25 @@ async def simulate_emr_prescription(
     # Select target patient & mock scenario items
     if payload.scenario == "normal":
         p_id = payload.patient_id or "PAT_SIM_NORMAL"
-        patient = Patient(id=p_id, name="안정환 (시뮬레이션)", birth_date="19920315", gender="M")
+        patient = Patient(id=p_id, name="안정환 (시뮬레이션)", birth_year=1992, consent_given=True)
         items = [PrescriptionItem(medicine_id="MED001", dose_mg=5.0, days_supply=7, quantity=7)]
     elif payload.scenario == "doctor_shopping":
         p_id = payload.patient_id or "PAT_SIM_SHOPPING"
-        patient = Patient(id=p_id, name="주의환 (의사쇼핑)", birth_date="19851120", gender="F")
+        patient = Patient(id=p_id, name="주의환 (의사쇼핑)", birth_year=1985, consent_given=True)
         items = [
             PrescriptionItem(medicine_id="MED003", dose_mg=20.0, days_supply=14, quantity=28),
             PrescriptionItem(medicine_id="MED004", dose_mg=10.0, days_supply=14, quantity=14),
         ]
     elif payload.scenario == "over_dose":
         p_id = payload.patient_id or "PAT_SIM_OVER"
-        patient = Patient(id=p_id, name="위험환 (과다처방)", birth_date="19780601", gender="M")
+        patient = Patient(id=p_id, name="위험환 (과다처방)", birth_year=1978, consent_given=True)
         items = [
             PrescriptionItem(medicine_id="MED002", dose_mg=50.0, days_supply=30, quantity=90),
             PrescriptionItem(medicine_id="MED005", dose_mg=30.0, days_supply=30, quantity=60),
         ]
     else:  # early_refill
         p_id = payload.patient_id or "PAT_SIM_REFILL"
-        patient = Patient(id=p_id, name="조기환 (조기재처방)", birth_date="19951205", gender="F")
+        patient = Patient(id=p_id, name="조기환 (조기재처방)", birth_year=1995, consent_given=True)
         items = [
             PrescriptionItem(medicine_id="MED001", dose_mg=10.0, days_supply=3, quantity=3),
         ]
@@ -78,14 +78,20 @@ async def simulate_emr_prescription(
 
     demo_data.PATIENTS[p_id] = patient
     if institution_id not in INSTITUTIONS:
-        from app.demo_data import Institution
-        INSTITUTIONS[institution_id] = Institution(id=institution_id, name="시연용 스마트병원", region="서울")
+        from app.demo_data import Institution, InstitutionType
+        INSTITUTIONS[institution_id] = Institution(
+            id=institution_id,
+            name="시연용 스마트병원",
+            type=InstitutionType.HOSPITAL,
+            is_specialty_pain_clinic=False,
+        )
 
     rx = Prescription(
         id=rx_id,
         patient_id=p_id,
         institution_id=institution_id,
-        issued_at=timestamp_str,
+        doctor_id="doc_simulator",
+        issued_at=datetime.now(timezone.utc),
         items=items,
     )
     demo_data.PRESCRIPTIONS[rx_id] = rx
@@ -105,19 +111,19 @@ async def simulate_emr_prescription(
         details={
             "scenario": payload.scenario,
             "prescription_id": rx_id,
-            "risk_score": score_result.total_score,
+            "risk_score": score_result.score,
             "risk_grade": score_result.grade,
         },
     )
 
     # Broadcast SSE alert if high-risk or caution
-    if score_result.total_score >= 60:
+    if score_result.score >= 50:
         alert_payload = {
             "prescription_id": rx_id,
             "patient_name": patient.name,
             "anonymized_patient_hash": f"simulated_hash_{p_id}",
             "institution_id": institution_id,
-            "total_score": score_result.total_score,
+            "total_score": score_result.score,
             "grade": score_result.grade,
             "explanation": score_result.explanation,
             "issued_at": timestamp_str,
@@ -129,7 +135,7 @@ async def simulate_emr_prescription(
         "scenario": payload.scenario,
         "prescription_id": rx_id,
         "patient_name": patient.name,
-        "risk_score": score_result.total_score,
+        "risk_score": score_result.score,
         "risk_grade": score_result.grade,
         "explanation": score_result.explanation,
         "audit_index": audit_entry.index,

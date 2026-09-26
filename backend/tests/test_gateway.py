@@ -70,4 +70,4 @@ def test_gateway_unauthorized_missing_api_key():
     # Request without X-API-KEY header
     response = client.post("/api/gateway/prescriptions", json=payload)
     assert response.status_code == 401
-    assert "API Key" in response.json()["detail"]
+    assert "X-API-KEY" in response.json()["detail"]
