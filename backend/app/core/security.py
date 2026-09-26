@@ -18,7 +18,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def get_password_hash(password: str) -> str:
-    """Generate bcrypt hash for a plain password."""
+    # 72바이트 초과 시 에러 방지
+    if isinstance(password, str):
+        password = password[:72]
     return pwd_context.hash(password)
 
 
