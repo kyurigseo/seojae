@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api.routes import router as main_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.audit import router as audit_router
+from app.gateway.router import router as gateway_router
 
 app = FastAPI(
     title="Medisync Scoring Service (Backend 1)",
@@ -24,6 +25,7 @@ app.add_middleware(
 app.include_router(main_router)
 app.include_router(auth_router)
 app.include_router(audit_router)
+app.include_router(gateway_router)
 
 
 @app.get("/health")
