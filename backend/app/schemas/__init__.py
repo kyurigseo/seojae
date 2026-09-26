@@ -80,7 +80,7 @@ class Prescription(BaseModel):
     id: str
     patient_id: str
     institution_id: str
-    doctor_id: str = "doc_default"
+    doctor_id: str
     issued_at: datetime
     items: list[PrescriptionItem]
 

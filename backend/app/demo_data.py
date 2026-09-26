@@ -143,6 +143,12 @@ MEDICINES: dict[str, Medicine] = {
     ]
 }
 
+MEDICINES["MED001"] = MEDICINES["fentanyl_patch"]
+MEDICINES["MED002"] = MEDICINES["oxycodone"]
+MEDICINES["MED003"] = MEDICINES["hydromorphone"]
+MEDICINES["MED004"] = MEDICINES["zolpidem"]
+MEDICINES["MED005"] = MEDICINES["midazolam"]
+
 INSTITUTIONS: dict[str, Institution] = {
     i.id: i
     for i in [
