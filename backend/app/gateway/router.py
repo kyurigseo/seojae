@@ -29,15 +29,16 @@ def anonymize_resident_id(resident_reg_no: Optional[str], patient_id: str) -> st
     "/prescriptions",
     response_model=GatewayPrescriptionResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="실시간 처방전 수신 게이트웨이 (비식별화 + 스코어링 + 감사로그)",
+    summary="실시간 처방전 수신 게이트웨이 (비식별화 + 스코어링 + 감사로그 + SSE 브로드캐스트)",
 )
-def receive_prescription_gateway(
+async def receive_prescription_gateway(
     payload: GatewayPrescriptionRequest,
     x_api_key: str = Depends(verify_api_key),
     request: Request = None,
 ):
     """Receives prescription data from EMR/pharmacy, anonymizes sensitive personal info via SHA-256 + Salt,
-    evaluates risk scoring through Backend 1 scoring engine, and logs the transaction in the hash-chain audit store.
+    evaluates risk scoring through Backend 1 scoring engine, logs the transaction in the hash-chain audit store,
+    and broadcasts real-time SSE alerts if high-risk (score >= 80).
     """
     client_ip = request.client.host if request and request.client else "127.0.0.1"
 
@@ -101,6 +102,20 @@ def receive_prescription_gateway(
             "risk_grade": score_result.grade,
         },
     )
+
+    # 5. Broadcast real-time SSE notification if high-risk (score >= 80)
+    if score_result.total_score >= 80 or score_result.grade == "high_risk":
+        alert_payload = {
+            "prescription_id": payload.prescription_id,
+            "patient_name": payload.patient_name,
+            "anonymized_patient_hash": anonymized_hash,
+            "institution_id": payload.institution_id,
+            "total_score": score_result.total_score,
+            "grade": score_result.grade,
+            "explanation": score_result.explanation,
+            "issued_at": payload.issued_at,
+        }
+        await notification_manager.broadcast(alert_payload)
 
     return GatewayPrescriptionResponse(
         status="success",
