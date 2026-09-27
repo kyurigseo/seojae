@@ -20,7 +20,7 @@ from app.scoring.signals import run_all_signals
 
 ISOLATION_MAX_BONUS = 10.0  # iso score can nudge the rule score by at most this many points
 
-CAUTION_THRESHOLD = 60
+CAUTION_THRESHOLD = 50
 HIGH_RISK_THRESHOLD = 80
 
 # Which context flags justify which drug classes (section 5-2).
