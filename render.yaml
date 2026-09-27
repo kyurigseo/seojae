@@ -1,0 +1,12 @@
+# Render "Blueprint" config — https://render.com/docs/blueprint-spec
+# On render.com: New + -> Blueprint -> pick this repo -> it reads this file automatically.
+services:
+  - type: web
+    name: medisync
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: MFDS_API_KEY
+        sync: false # set the real value in the Render dashboard, not here

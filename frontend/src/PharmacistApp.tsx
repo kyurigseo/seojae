@@ -639,17 +639,17 @@ function ReportsView({ patients }: { patients: Patient[] }) {
       {/* KPI row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 20 }}>
         {[
-          { label: "총 스캔 건수", value: total, unit: "건", sub: "이번 달 전체", accent: MS.action },
-          { label: "사유 기재율", value: "18", unit: "%", sub: "고위험 조제 진행", accent: "#DC2626" },
-          { label: "가장 많은 신호", value: "조기", unit: "재방", sub: "최다 발생 유형", accent: "#D97706" },
-          { label: "평균 리스크 점수", value: "34", unit: "점", sub: "전체 처방전 기준", accent: "#16A34A" },
-        ].map(({ label, value, unit, sub, accent }) => (
+          { label: "총 스캔 건수", value: total, unit: "건", sub: "이번 달 전체", accent: MS.action, isText: false },
+          { label: "사유 기재율", value: "18", unit: "%", sub: "고위험 조제 진행", accent: "#DC2626", isText: false },
+          { label: "가장 많은 신호", value: "조기 재방", unit: "", sub: "최다 발생 유형", accent: "#D97706", isText: true },
+          { label: "평균 리스크 점수", value: "34", unit: "점", sub: "전체 처방전 기준", accent: "#16A34A", isText: false },
+        ].map(({ label, value, unit, sub, accent, isText }) => (
           <div key={label} style={{ borderRadius: 16, border: `1px solid ${MS.border}`, background: MS.card, overflow: "hidden" }}>
             <div style={{ height: 3, background: accent, borderRadius: "0" }} />
             <div style={{ padding: "18px 20px 20px" }}>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 4, marginBottom: 4 }}>
-                <span className="font-mono-data" style={{ fontSize: 32, fontWeight: 700, color: MS.text, letterSpacing: "-0.03em", lineHeight: 1 }}>{value}</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: MS.muted, paddingBottom: 2 }}>{unit}</span>
+                <span className={isText ? undefined : "font-mono-data"} style={{ fontSize: isText ? 22 : 32, fontWeight: 700, color: MS.text, letterSpacing: "-0.03em", lineHeight: 1 }}>{value}</span>
+                {unit && <span style={{ fontSize: 14, fontWeight: 600, color: MS.muted, paddingBottom: 2 }}>{unit}</span>}
               </div>
               <p style={{ fontSize: 12, fontWeight: 600, color: MS.text, margin: "0 0 2px" }}>{label}</p>
               <p style={{ fontSize: 11, color: MS.muted, margin: 0 }}>{sub}</p>

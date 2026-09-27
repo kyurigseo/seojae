@@ -32,8 +32,8 @@ function Selector({ onSelect }: { onSelect: (m: Mode) => void }) {
             처방 순간, 함께 판단합니다
           </h1>
           <p className="text-base" style={{ color: "#5A8A95", maxWidth: 480, margin: "0 auto", lineHeight: 1.7 }}>
-            환자·약국·의원 사이 의료용 마약류 처방 정보를 실시간으로 동기화(Sync)하여<br/>
-            사각지대를 없애는 조기경보 시스템입니다
+            환자·약국·병원 사이 의료용 마약류 처방 정보를 실시간으로 동기화(Sync)하여<br/>
+            마약 사각지대를 없애는 조기경보 시스템
           </p>
         </div>
 
