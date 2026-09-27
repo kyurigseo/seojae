@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import router as main_router
+from app.api.routes.scoring import router as scoring_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.audit import router as audit_router
 from app.api.routes.notifications import router as notifications_router
@@ -24,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(main_router)
+app.include_router(scoring_router)
 app.include_router(auth_router)
 app.include_router(audit_router)
 app.include_router(notifications_router)

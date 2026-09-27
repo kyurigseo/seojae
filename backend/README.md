@@ -28,7 +28,7 @@ pytest -q
 
 ```
 app/
-  schemas.py          # ERD(8-2)에 대응하는 Pydantic 도메인 모델
+  schemas/            # ERD(8-2)에 대응하는 Pydantic 도메인 모델 (+ auth.py: 백엔드2 인증 스키마)
   demo_data.py         # 인메모리 시뮬레이터 데이터 (A~E 시나리오 포함)
   store.py             # 런타임 상태 (계산된 점수, 약사 액션)
   scoring/
@@ -36,8 +36,10 @@ app/
     isolation_model.py # Isolation Forest 이상치 보정 (5-1 1단계)
     explain.py         # 자연어 설명 생성 (5-3)
     engine.py           # 시그널 + 이상치 + 정당사유 보정 → 최종 점수 (5-2, 6-1)
-  api/
-    routes.py           # FastAPI 엔드포인트 (8-3)
+    calibration.py       # 가중치·컷라인 검증 리포트 (아래 참고)
+  api/routes/
+    scoring.py           # 백엔드1 FastAPI 엔드포인트 (8-3) — 스코어링/타임라인/의약품/mfds
+    auth.py, audit.py, notifications.py, analytics.py  # 백엔드2 담당
 ```
 
 ## 스코어링 파이프라인
@@ -56,7 +58,9 @@ app/
    `sklearn.ensemble.IsolationForest`로 그대로 교체 가능(인터페이스 동일).
 3. **정당 사유 보정** (`engine.py`) — 환자의 진료 맥락(암성 통증 등)이 트리거된
    약물군과 맞으면 점수를 보고서 예시(100→47)와 동일한 비율로 하향 보정.
-4. **등급 산출**: 0~59 안전 / 60~79 주의(대시보드 표시만) / 80~100 고위험(약사 팝업 + 환자 SMS 트리거 대상).
+4. **등급 산출**: 0~49 안전 / 50~79 주의(대시보드 표시만) / 80~100 고위험(약사 팝업 + 환자 SMS 트리거 대상).
+   (컷라인은 `engine.py`의 `CAUTION_THRESHOLD`/`HIGH_RISK_THRESHOLD` 상수 — 백엔드2가 자신들의
+   테스트 검증 과정에서 50으로 한 차례 조정함. 아래 캘리브레이션 결과는 이 값 기준으로 재검증됨.)
 5. **설명 생성** (`explain.py`) — 발동한 시그널을 쉬운 문장으로 조합, 약사가
    조제 거부/보류 근거로 쓸 수 있는 형태.
 
